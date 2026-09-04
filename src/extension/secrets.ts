@@ -38,6 +38,6 @@ export async function getModel(
   context: vscode.ExtensionContext
 ): Promise<string> {
   const model = await context.secrets.get(MODEL_SECRET_KEY);
-  // Updated to the latest recommended Flash model
-  return model || 'gemini-3.6-flash'; 
+  // Switched to Groq's current fastest free model
+  return model || 'openai/gpt-oss-20b'; 
 }

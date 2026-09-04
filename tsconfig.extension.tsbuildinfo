@@ -1,0 +1,1 @@
+{"root":["./src/extension/extension.ts","./src/extension/secrets.ts","./src/extension/ai/index.ts","./src/extension/ai/prompts.ts","./src/extension/git/errors.ts","./src/extension/git/index.ts"],"version":"6.0.3"}
