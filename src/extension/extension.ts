@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as git from './git';
 import * as ai from './ai';
 import * as secrets from './secrets';
+import { createSettingsPanel } from './webview/panel';
 
 // Create a dedicated output channel for debugging
 let outputChannel: vscode.OutputChannel;
@@ -32,7 +33,7 @@ export function activate(context: vscode.ExtensionContext) {
     const openSettingsCmd = vscode.commands.registerCommand(
         'gitsnap.openSettings',
         () => {
-            vscode.window.showInformationMessage('Settings panel coming soon!');
+            createSettingsPanel(context);
         }
     );
 
@@ -43,7 +44,7 @@ export function activate(context: vscode.ExtensionContext) {
                 prompt: 'Enter your AI provider API key',
                 password: true,
                 ignoreFocusOut: true,
-                placeHolder: 'AIzaSy... (your Gemini API key)',
+                placeHolder: 'gsk_... (your Groq API key)',
             });
 
             if (apiKey) {
@@ -90,7 +91,7 @@ async function runAiCommitAndPush(context: vscode.ExtensionContext): Promise<voi
                 const apiKey = await secrets.getApiKey(context);
                 const model = await secrets.getModel(context);
 
-                const commitMessage = await ai.generateCommitMessage(diff, apiKey, model);
+                const commitMessage = await ai.generateCommitMessage(diff, apiKey || '', model);
 
                 // Step 4: Commit
                 progress.report({ message: 'Committing...' });

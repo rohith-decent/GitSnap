@@ -55,8 +55,8 @@
     "serialize-javascript": "^7.0.6"
   },
   "dependencies": {
-    "@google/genai": "^2.20.0",
     "ai": "^7.0.87",
+    "groq-sdk": "^1.6.0",
     "simple-git": "^3.36.0"
   }
 }
