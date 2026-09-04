@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 // We'll test the internal helpers by importing them. 
 // If they're not exported yet, export truncateDiff and cleanCommitMessage from ai/index.ts
 import { generateCommitMessage } from './index';
-
+//This is my project and i am very happy
 // Mock the Groq SDK to avoid real network calls
 vi.mock('groq-sdk', () => {
   return {
