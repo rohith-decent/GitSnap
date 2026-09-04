@@ -1,0 +1,62 @@
+{
+  "name": "gitsnap",
+  "displayName": "gitsnap",
+  "description": "One-click AI-powered Git commit and push",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.134.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "gitsnap.aiCommitAndPush",
+        "title": "GitSnap: AI Commit & Push"
+      },
+      {
+        "command": "gitsnap.openSettings",
+        "title": "GitSnap: Open Settings"
+      },
+      {
+        "command": "gitsnap.setApiKey",
+        "title": "GitSnap: Set API Key"
+      }
+    ]
+  },
+  "scripts": {
+    "build:extension": "vite build --mode extension",
+    "build:webview": "vite build --mode webview",
+    "build": "npm run build:extension && npm run build:webview",
+    "watch": "concurrently \"vite build --mode extension --watch\" \"vite build --mode webview --watch\"",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^24.13.3",
+    "@types/vscode": "^1.134.0",
+    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-electron": "^3.0.0",
+    "concurrently": "^10.0.5",
+    "eslint": "^10.5.0",
+    "svelte": "^5.57.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.61.1",
+    "vite": "^8.2.2"
+  },
+  "overrides": {
+    "diff": "^8.0.4",
+    "serialize-javascript": "^7.0.6"
+  },
+  "dependencies": {
+    "@google/genai": "^2.20.0",
+    "ai": "^7.0.87",
+    "simple-git": "^3.36.0"
+  }
+}

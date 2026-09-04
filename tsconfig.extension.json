@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "outDir": "out/extension",
+    "rootDir": "src/extension",
+    "lib": ["ES2022"],
+    "types": ["node"]
+  },
+  "include": ["src/extension/**/*"],
+  "exclude": ["node_modules", ".vscode-test", "src/webview/**/*"]
+}
