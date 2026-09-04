@@ -1,71 +1,51 @@
-# gitsnap README
+# ⚡ GitSnap
 
-This is the README for your extension "gitsnap". After writing up a brief description, we recommend including the following sections.
+One-click AI-powered Git stage, commit, and push for VS Code.
 
-## Features
+## ✨ Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- **AI-Generated Commit Messages**: Automatically analyzes your staged changes and generates a conventional commit message.
+- **One-Click Workflow**: Stage all changes → Generate Message → Commit → Push, triggered directly from the status bar.
+- **Secure API Key Storage**: Keys are safely stored in your OS credential manager (Keychain, Credential Manager, libsecret) — never plain text.
+- **Provider Agnostic**: Works with Groq, OpenAI-compatible endpoints, and other LLM providers.
+- **Native Progress UI**: Uses VS Code's built-in loading states for a seamless, theme-correct experience.
+- **Friendly Error Handling**: Clear, actionable messages instead of raw terminal output or stack traces.
 
-For example if there is an image subfolder under your extension project workspace:
+## 🚀 Installation
 
-\!\[feature X\]\(images/feature-x.png\)
+1. Download the `gitsnap-*.vsix` file.
+2. Open VS Code and go to Extensions (`Ctrl+Shift+X` / `Cmd+Shift+X`).
+3. Click the `...` (More Actions) menu in the top-right corner.
+4. Select **Install from VSIX...** and choose the downloaded file.
+5. Reload VS Code when prompted.
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+## 🛠️ Usage
 
-## Requirements
+1. Open a Git repository in VS Code.
+2. Run `GitSnap: Open Settings` from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) to securely store your AI API key.
+3. Make changes to your code.
+4. Click the **⚡ GitSnap** button in the bottom-left status bar.
+5. GitSnap will automatically stage your changes, generate a commit message via AI, commit, and push to your remote.
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+## ⚙️ Settings
 
-## Extension Settings
+All configuration is handled securely via VS Code's `SecretStorage` API:
+- **AI Provider API Key**: Required for message generation. Supports Groq and OpenAI-compatible keys.
+- **AI Model**: Select your preferred model (defaults to a fast, low-latency option).
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+## 📋 Requirements
 
-For example:
+- VS Code `^1.85.0`
+- Git CLI installed and available in your system `PATH`
+- Active internet connection (for AI API calls)
 
-This extension contributes the following settings:
+## 🤝 Contributing
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+Pull requests and issue reports are welcome! Please maintain the existing architecture:
+- Keep extension host (`node`) and webview (`browser`) code strictly separated.
+- Never leak raw terminal/SDK errors to the user UI.
+- Use `SecretStorage` for all sensitive data.
 
-## Known Issues
+## 📄 License
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+MIT License — see [LICENSE](LICENSE) for details.

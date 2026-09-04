@@ -131,3 +131,4 @@ export async function generateCommitMessage(
     throw new Error(`AI request failed: ${errorMessage}`);
   }
 }
+export { truncateDiff, cleanCommitMessage };
