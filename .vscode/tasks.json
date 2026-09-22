@@ -4,27 +4,20 @@
     {
       "type": "npm",
       "script": "watch",
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "isBackground": true,
       "problemMatcher": {
-        "owner": "vite",
-        "fileLocation": ["relative", "${workspaceFolder}"],
-        "pattern": {
-          "regexp": "^$"
-        },
+        "owner": "custom",
+        "isBackground": true,
         "background": {
           "activeOnStart": true,
-          "beginsPattern": "^.*vite.*",
+          "beginsPattern": "^.*(building|build started).*",
           "endsPattern": "^.*built in.*"
+        },
+        "pattern": {
+          "regexp": "^$"
         }
       },
-      "presentation": {
-        "reveal": "never",
-        "panel": "dedicated"
-      }
+      "label": "npm: watch",
+      "isBackground": true
     }
   ]
 }

@@ -33,3 +33,24 @@ export class NotAGitRepoError extends GitSnapError {
     this.name = 'NotAGitRepoError';
   }
 }
+
+export class BranchAlreadyExistsError extends GitSnapError {
+  constructor(branchName: string) {
+    super(`Branch '${branchName}' already exists.`);
+    this.name = 'BranchAlreadyExistsError';
+  }
+}
+
+export class UnmergedBranchDeleteError extends GitSnapError {
+  constructor(branchName: string) {
+    super(`Branch '${branchName}' is not fully merged. Use force delete to delete it anyway.`);
+    this.name = 'UnmergedBranchDeleteError';
+  }
+}
+
+export class UncommittedChangesError extends GitSnapError {
+  constructor() {
+    super('You have uncommitted local changes. Please commit or stash them before switching branches.');
+    this.name = 'UncommittedChangesError';
+  }
+}

@@ -29,10 +29,10 @@ export function createSettingsPanel(context: vscode.ExtensionContext): vscode.We
 
   // Point to Vite's compiled output
   const scriptUri = panel.webview.asWebviewUri(
-    vscode.Uri.joinPath(context.extensionUri, 'dist', 'webview', 'assets', 'main.js')
+    vscode.Uri.joinPath(context.extensionUri, 'dist', 'webview', 'main.js')
   );
   const styleUri = panel.webview.asWebviewUri(
-    vscode.Uri.joinPath(context.extensionUri, 'dist', 'webview', 'assets', 'main.css')
+    vscode.Uri.joinPath(context.extensionUri, 'dist', 'webview', 'main.css')
   );
 
   panel.webview.html = getWebviewContent(panel.webview, scriptUri, styleUri, nonce);
@@ -87,7 +87,7 @@ function getWebviewContent(webview: vscode.Webview, scriptUri: vscode.Uri, style
 </head>
 <body>
   <div id="app"></div>
-  <script nonce="${nonce}" src="${scriptUri}"></script>
+  <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
 </body>
 </html>`;
 }

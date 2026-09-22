@@ -3,28 +3,78 @@
   "displayName": "GitSnap",
   "description": "One-click AI-powered Git commit and push",
   "version": "0.1.0",
-  "engines": {
-    "vscode": "^1.134.0"
-  },
+  "license": "MIT",
+  "publisher": "RohithSGowda",
   "repository": {
     "type": "git",
     "url": "https://github.com/rohith-decent/GitSnap.git"
   },
-  "publisher": "RSG",
+  "engines": {
+    "vscode": "^1.134.0"
+  },
   "categories": [
     "Other",
     "SCM Providers"
+  ],
+  "keywords": [
+    "git",
+    "ai",
+    "commit",
+    "groq",
+    "push"
   ],
   "activationEvents": [
     "onStartupFinished"
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "GitSnap",
+      "properties": {
+        "gitsnap.ai.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable AI-powered features (commit message generation, branch intelligence, natural language commands). When disabled, GitSnap works as a pure Git tool."
+        },
+        "gitsnap.ai.provider": {
+          "type": "string",
+          "enum": [
+            "groq",
+            "openai",
+            "anthropic",
+            "ollama",
+            "tabby"
+          ],
+          "default": "groq",
+          "description": "Which AI provider to use for AI-powered features."
+        }
+      }
+    },
     "commands": [
       {
         "command": "gitsnap.aiCommitAndPush",
-        "title": "GitSnap: AI Commit & Push",
+        "title": "GitSnap: Fast AI Commit & Push",
         "icon": "$(zap)"
+      },
+      {
+        "command": "gitsnap.openCommitEditor",
+        "title": "GitSnap: Open Commit Editor",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "gitsnap.openBranchDashboard",
+        "title": "GitSnap: Open Branch Dashboard",
+        "icon": "$(git-branch)"
+      },
+      {
+        "command": "gitsnap.openNlInterface",
+        "title": "GitSnap: Natural Language Command",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "gitsnap.undoLastCommit",
+        "title": "GitSnap: Undo Last Commit (Soft Reset)",
+        "icon": "$(discard)"
       },
       {
         "command": "gitsnap.openSettings",
@@ -36,16 +86,96 @@
         "title": "GitSnap: Set API Key",
         "icon": "$(key)"
       }
+    ],
+    "menus": {
+      "scm/title": [
+        {
+          "command": "gitsnap.aiCommitAndPush",
+          "group": "navigation@1"
+        },
+        {
+          "command": "gitsnap.openCommitEditor",
+          "group": "navigation@2"
+        },
+        {
+          "command": "gitsnap.openBranchDashboard",
+          "group": "navigation@3"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "gitsnap.aiCommitAndPush",
+        "key": "ctrl+alt+g a",
+        "win": "ctrl+alt+g a",
+        "mac": "cmd+alt+g a"
+      },
+      {
+        "command": "gitsnap.aiCommitAndPush",
+        "key": "ctrl+alt+g ctrl+alt+a",
+        "win": "ctrl+alt+g ctrl+alt+a",
+        "mac": "cmd+alt+g cmd+alt+a"
+      },
+      {
+        "command": "gitsnap.openCommitEditor",
+        "key": "ctrl+alt+g c",
+        "win": "ctrl+alt+g c",
+        "mac": "cmd+alt+g c"
+      },
+      {
+        "command": "gitsnap.openCommitEditor",
+        "key": "ctrl+alt+g ctrl+alt+c",
+        "win": "ctrl+alt+g ctrl+alt+c",
+        "mac": "cmd+alt+g cmd+alt+c"
+      },
+      {
+        "command": "gitsnap.openBranchDashboard",
+        "key": "ctrl+alt+g b",
+        "win": "ctrl+alt+g b",
+        "mac": "cmd+alt+g b"
+      },
+      {
+        "command": "gitsnap.openBranchDashboard",
+        "key": "ctrl+alt+g ctrl+alt+b",
+        "win": "ctrl+alt+g ctrl+alt+b",
+        "mac": "cmd+alt+g cmd+alt+b"
+      },
+      {
+        "command": "gitsnap.openNlInterface",
+        "key": "ctrl+alt+g n",
+        "win": "ctrl+alt+g n",
+        "mac": "cmd+alt+g n"
+      },
+      {
+        "command": "gitsnap.openNlInterface",
+        "key": "ctrl+alt+g ctrl+alt+n",
+        "win": "ctrl+alt+g ctrl+alt+n",
+        "mac": "cmd+alt+g cmd+alt+n"
+      },
+      {
+        "command": "gitsnap.undoLastCommit",
+        "key": "ctrl+alt+g u",
+        "win": "ctrl+alt+g u",
+        "mac": "cmd+alt+g u"
+      },
+      {
+        "command": "gitsnap.undoLastCommit",
+        "key": "ctrl+alt+g ctrl+alt+u",
+        "win": "ctrl+alt+g ctrl+alt+u",
+        "mac": "cmd+alt+g cmd+alt+u"
+      }
     ]
   },
   "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -b tsconfig.extension.json tsconfig.webview.json && npm run build",
+    "build": "npm run build:extension && npm run build:webview",
     "build:extension": "vite build --mode extension",
     "build:webview": "vite build --mode webview",
-    "build": "npm run build:extension && npm run build:webview",
     "watch:extension": "vite build --mode extension --watch",
     "watch:webview": "vite build --mode webview --watch",
     "watch": "concurrently \"npm run watch:extension\" \"npm run watch:webview\"",
-    "compile": "tsc -b tsconfig.extension.json tsconfig.webview.json && npm run build",
+    "package": "vsce package",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -56,6 +186,7 @@
     "@types/vscode": "^1.134.0",
     "@vscode/test-cli": "^0.0.15",
     "@vscode/test-electron": "^3.0.0",
+    "@vscode/vsce": "^3.2.1",
     "concurrently": "^10.0.5",
     "eslint": "^10.5.0",
     "svelte": "^5.57.0",
@@ -73,4 +204,4 @@
     "groq-sdk": "^1.6.0",
     "simple-git": "^3.36.0"
   }
-}	
+}
