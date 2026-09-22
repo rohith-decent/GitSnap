@@ -33,16 +33,22 @@ export default defineConfig(({ mode }) => {
     build: {
       target: 'es2020',
       outDir: 'dist/webview',
-      emptyOutDir: true, // Only empties dist/webview
+      emptyOutDir: true, // Cleans dist/webview before bundling browser assets
+      sourcemap: true,
       rollupOptions: {
-        input: 'src/webview/main.ts',
+        input: {
+          main: 'src/webview/main.ts',
+          dashboard: 'src/webview/dashboard-main.ts',
+          commitEditor: 'src/webview/commit-editor-main.ts',
+          toolkit: 'src/webview/toolkit-main.ts',
+          prPrep: 'src/webview/pr-prep-main.ts',
+        },
         output: {
-          entryFileNames: 'assets/[name].js',
-          chunkFileNames: 'assets/[name].js',
-          assetFileNames: 'assets/[name].[ext]',
+          entryFileNames: '[name].js',
+          chunkFileNames: '[name].js',
+          assetFileNames: '[name].[ext]',
         },
       },
-      sourcemap: true,
     },
   };
 });

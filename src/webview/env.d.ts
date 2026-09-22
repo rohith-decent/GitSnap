@@ -6,3 +6,10 @@ declare module '*.svelte' {
   const component: Component<any, any, any>;
   export default component;
 }
+
+declare function acquireVsCodeApi(): {
+  postMessage(message: unknown): void;
+  getState(): unknown;
+  setState(state: unknown): void;
+};
+

@@ -33,3 +33,38 @@ export class NotAGitRepoError extends GitSnapError {
     this.name = 'NotAGitRepoError';
   }
 }
+
+export class BranchAlreadyExistsError extends GitSnapError {
+  constructor(branchName: string) {
+    super(`Branch '${branchName}' already exists.`);
+    this.name = 'BranchAlreadyExistsError';
+  }
+}
+
+export class UnmergedBranchDeleteError extends GitSnapError {
+  constructor(branchName: string) {
+    super(`Branch '${branchName}' is not fully merged. Use force delete to delete it anyway.`);
+    this.name = 'UnmergedBranchDeleteError';
+  }
+}
+
+export class UncommittedChangesError extends GitSnapError {
+  constructor() {
+    super('You have uncommitted local changes. Please commit or stash them before switching branches.');
+    this.name = 'UncommittedChangesError';
+  }
+}
+
+export class CherryPickConflictError extends GitSnapError {
+  constructor(sha: string) {
+    super(`Cherry-pick of commit ${sha.slice(0, 7)} produced conflicts. Resolve conflicts manually or run 'git cherry-pick --abort'.`);
+    this.name = 'CherryPickConflictError';
+  }
+}
+
+export class WorktreeError extends GitSnapError {
+  constructor(message: string) {
+    super(`Worktree operation failed: ${message}`);
+    this.name = 'WorktreeError';
+  }
+}
