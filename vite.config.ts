@@ -40,6 +40,8 @@ export default defineConfig(({ mode }) => {
           main: 'src/webview/main.ts',
           dashboard: 'src/webview/dashboard-main.ts',
           commitEditor: 'src/webview/commit-editor-main.ts',
+          toolkit: 'src/webview/toolkit-main.ts',
+          prPrep: 'src/webview/pr-prep-main.ts',
         },
         output: {
           entryFileNames: '[name].js',

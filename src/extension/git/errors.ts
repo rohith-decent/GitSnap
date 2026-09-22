@@ -54,3 +54,17 @@ export class UncommittedChangesError extends GitSnapError {
     this.name = 'UncommittedChangesError';
   }
 }
+
+export class CherryPickConflictError extends GitSnapError {
+  constructor(sha: string) {
+    super(`Cherry-pick of commit ${sha.slice(0, 7)} produced conflicts. Resolve conflicts manually or run 'git cherry-pick --abort'.`);
+    this.name = 'CherryPickConflictError';
+  }
+}
+
+export class WorktreeError extends GitSnapError {
+  constructor(message: string) {
+    super(`Worktree operation failed: ${message}`);
+    this.name = 'WorktreeError';
+  }
+}

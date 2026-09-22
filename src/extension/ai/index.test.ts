@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { generateCommitMessage, generateBranchInsight, translateNlCommand, truncateDiff, cleanCommitMessage, getProvider } from './index';
+import { generateCommitMessage, generateBranchInsight, translateNlCommand, generatePrDescription, generateStashSummary, truncateDiff, cleanCommitMessage, getProvider } from './index';
 import * as configModule from './config';
 import { GroqProvider } from './providers/groq';
 import { OpenAiProvider } from './providers/openai';
@@ -22,12 +22,15 @@ vi.mock('groq-sdk', () => ({
 vi.mock('./config', () => ({
   getConfiguredProvider: vi.fn(() => 'groq'),
   isAiEnabled: vi.fn(() => true),
+  getCustomSystemPrompt: vi.fn(() => ''),
 }));
 
 describe('AI Module Helpers & Providers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(configModule.getConfiguredProvider).mockReturnValue('groq');
+    vi.mocked(configModule.isAiEnabled).mockReturnValue(true);
+    vi.mocked(configModule.getCustomSystemPrompt).mockReturnValue('');
   });
 
   it('truncates diff to tail when over 10000 chars', () => {
@@ -88,5 +91,68 @@ describe('AI Module Helpers & Providers', () => {
       'model'
     );
     expect(typeof resultEnabled).toBe('string');
+  });
+
+  it('translateNlCommand successfully parses JSON command plans', async () => {
+    const Groq = (await import('groq-sdk')).default;
+    const mockCreate = vi.fn().mockResolvedValue({
+      choices: [
+        {
+          message: {
+            content: '```json\n{"commands":[{"op":"switchBranch","args":{"name":"main"},"description":"Switch to main"}]}\n```',
+          },
+        },
+      ],
+    });
+    vi.mocked(Groq).mockImplementation(() => ({
+      chat: { completions: { create: mockCreate } },
+    } as any));
+
+    vi.mocked(configModule.getConfiguredProvider).mockReturnValue('groq');
+    const plan = await translateNlCommand('switch to main', 'key', 'llama-3.3-70b-versatile');
+    expect(plan.commands).toHaveLength(1);
+    expect(plan.commands[0].op).toBe('switchBranch');
+    expect(plan.commands[0].args.name).toBe('main');
+  });
+
+  it('generatePrDescription parses title and body from AI JSON output', async () => {
+    const Groq = (await import('groq-sdk')).default;
+    const mockCreate = vi.fn().mockResolvedValue({
+      choices: [
+        {
+          message: {
+            content: '{"title":"feat(auth): add OAuth2","body":"## Summary\\nAdded OAuth2 support."}',
+          },
+        },
+      ],
+    });
+    vi.mocked(Groq).mockImplementation(() => ({
+      chat: { completions: { create: mockCreate } },
+    } as any));
+
+    vi.mocked(configModule.getConfiguredProvider).mockReturnValue('groq');
+    const pr = await generatePrDescription(['feat(auth): add OAuth2'], 'key', 'llama-3.3-70b-versatile');
+    expect(pr.title).toBe('feat(auth): add OAuth2');
+    expect(pr.body).toContain('Added OAuth2 support');
+  });
+
+  it('generateStashSummary returns a 1-sentence stash description', async () => {
+    const Groq = (await import('groq-sdk')).default;
+    const mockCreate = vi.fn().mockResolvedValue({
+      choices: [
+        {
+          message: {
+            content: 'Work in progress refactoring auth module',
+          },
+        },
+      ],
+    });
+    vi.mocked(Groq).mockImplementation(() => ({
+      chat: { completions: { create: mockCreate } },
+    } as any));
+
+    vi.mocked(configModule.getConfiguredProvider).mockReturnValue('groq');
+    const summary = await generateStashSummary('mock diff text', 'key', 'llama-3.3-70b-versatile');
+    expect(summary).toBe('Work in progress refactoring auth module');
   });
 });

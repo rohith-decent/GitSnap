@@ -12,9 +12,17 @@ const mockCheckIsRepo = vi.fn();
 const mockReset = vi.fn();
 const mockLog = vi.fn();
 
+const mockRaw = vi.fn();
+
 vi.mock('vscode', () => ({
   workspace: {
     workspaceFolders: [{ uri: { fsPath: '/mock/workspace' } }],
+    getConfiguration: vi.fn(() => ({
+      get: vi.fn((key: string, defaultValue?: any) => defaultValue),
+    })),
+  },
+  window: {
+    showWarningMessage: vi.fn(),
   },
 }));
 
@@ -33,12 +41,7 @@ vi.mock('simple-git', () => ({
     checkoutBranch: mockCheckoutBranch,
     deleteLocalBranch: mockDeleteLocalBranch,
     fetch: mockFetch,
-    raw: vi.fn().mockImplementation((args: string[]) => {
-      if (args[0] === 'rev-parse') return Promise.resolve('origin/main');
-      if (args[0] === 'rev-list') return Promise.resolve('2\t1');
-      if (args[0] === 'show') return Promise.resolve('2026-09-20 10:00:00 +0000|Test Author');
-      return Promise.resolve('');
-    }),
+    raw: mockRaw,
   })),
 }));
 
@@ -53,6 +56,13 @@ describe('Git Module', () => {
         main: { current: true, name: 'main', commit: 'sha1' },
         'feature/test': { current: false, name: 'feature/test', commit: 'sha2' },
       },
+    });
+    mockRaw.mockImplementation((args: string[]) => {
+      if (args[0] === 'rev-parse') return Promise.resolve('origin/main');
+      if (args[0] === 'rev-list') return Promise.resolve('2\t1');
+      if (args[0] === 'show') return Promise.resolve('2026-09-20 10:00:00 +0000|Test Author');
+      if (args[0] === 'log') return Promise.resolve('hash1 commit message 1\nhash2 commit message 2');
+      return Promise.resolve('');
     });
   });
 
@@ -123,6 +133,41 @@ describe('Git Module', () => {
       mockCheckIsRepo.mockResolvedValueOnce(false);
 
       await expect(gitModule.undoLastCommit()).rejects.toThrow(NotAGitRepoError);
+    });
+  });
+
+  describe('Phase 8 & 9 Advanced Toolkit Functions', () => {
+    it('getLogExplorer returns formatted commit entries', async () => {
+      mockLog.mockResolvedValueOnce({
+        all: [
+          { hash: 'abc1234567', date: '2026-09-22', message: 'test commit', author_name: 'Bob', author_email: 'bob@example.com', refs: 'HEAD -> main' },
+        ],
+      });
+
+      const commits = await gitModule.getLogExplorer({ maxCount: 10 });
+      expect(commits).toHaveLength(1);
+      expect(commits[0].hash).toBe('abc1234567');
+      expect(commits[0].author_name).toBe('Bob');
+    });
+
+    it('cherryPick executes cherry-pick raw command and handles conflict errors', async () => {
+      await expect(gitModule.cherryPick('abc1234567')).resolves.not.toThrow();
+
+      mockRaw.mockRejectedValueOnce(new Error('conflict error during cherry-pick'));
+      await expect(gitModule.cherryPick('abc1234567')).rejects.toThrow(gitModule.CherryPickConflictError);
+    });
+
+    it('getRebasePreview lists commits that will replay on base branch', async () => {
+      const simpleGitInstance = (await import('simple-git')).default();
+      vi.mocked(simpleGitInstance.raw).mockImplementationOnce((args: string[]) => {
+        if (args[0] === 'log') return Promise.resolve('hash1 commit message 1\nhash2 commit message 2');
+        return Promise.resolve('');
+      });
+
+      const preview = await gitModule.getRebasePreview('main');
+      expect(preview).toHaveLength(2);
+      expect(preview[0].hash).toBe('hash1');
+      expect(preview[0].message).toBe('commit message 1');
     });
   });
 });

@@ -7,20 +7,26 @@ export class TabbyProvider implements AiProvider {
     this.baseUrl = baseUrl.replace(/\/$/, '');
   }
 
-  async generateCompletion(systemPrompt: string, userPrompt: string, model: string): Promise<string> {
+  async generateCompletion(
+    systemPrompt: string,
+    userPrompt: string,
+    model: string,
+    maxTokens: number = 1000
+  ): Promise<string> {
+    const selectedModel = model && model.trim().length > 0 ? model : 'tabby';
     const response = await fetch(`${this.baseUrl}/v1/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: model || 'tabby',
+        model: selectedModel,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        temperature: 0.3,
-        max_tokens: 100,
+        temperature: 0.2,
+        max_tokens: maxTokens,
       }),
     });
 
@@ -30,6 +36,11 @@ export class TabbyProvider implements AiProvider {
     }
 
     const data: any = await response.json();
-    return data.choices?.[0]?.message?.content ?? '';
+    const content = data.choices?.[0]?.message?.content;
+    if (!content || content.trim().length === 0) {
+      throw new Error(`Tabby model returned an empty response (model: ${selectedModel}).`);
+    }
+
+    return content;
   }
 }

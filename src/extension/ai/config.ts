@@ -14,3 +14,10 @@ export function isAiEnabled(): boolean {
 export function getConfiguredProvider(): string {
   return vscode.workspace.getConfiguration('gitsnap').get<string>('ai.provider', 'groq') ?? 'groq';
 }
+
+/**
+ * Returns the local custom system prompt if set by the user/team.
+ */
+export function getCustomSystemPrompt(): string {
+  return vscode.workspace.getConfiguration('gitsnap').get<string>('ai.customSystemPrompt', '') ?? '';
+}

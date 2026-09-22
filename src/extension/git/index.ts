@@ -9,6 +9,8 @@ import {
   BranchAlreadyExistsError,
   UnmergedBranchDeleteError,
   UncommittedChangesError,
+  CherryPickConflictError,
+  WorktreeError,
 } from './errors';
 
 // ─────────────────────────────────────────────────────────────
@@ -26,6 +28,35 @@ export interface BranchInfo {
   isDiverged?: boolean;
   isReadyToMerge?: boolean;
   aiInsight?: string | null;
+}
+
+export interface LogCommitInfo {
+  hash: string;
+  date: string;
+  message: string;
+  author_name: string;
+  author_email: string;
+  refs: string;
+}
+
+export interface StashInfo {
+  id: number;
+  name: string;
+  date: string;
+  message: string;
+  aiSummary?: string | null;
+}
+
+export interface WorktreeInfo {
+  path: string;
+  commit: string;
+  branch: string;
+  isBare: boolean;
+}
+
+export interface RebaseCommitInfo {
+  hash: string;
+  message: string;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -287,6 +318,22 @@ export async function switchBranch(name: string): Promise<void> {
 }
 
 export async function createBranch(name: string, from?: string): Promise<void> {
+  // Step 9.4 — Branch Naming Guardrails check
+  const config = vscode.workspace.getConfiguration('gitsnap');
+  const patternStr = config.get<string>('branchNaming.pattern', '');
+  if (patternStr && patternStr.trim().length > 0) {
+    try {
+      const regex = new RegExp(patternStr.trim());
+      if (!regex.test(name)) {
+        vscode.window.showWarningMessage(
+          `⚠️ Branch name '${name}' does not match pattern '${patternStr}'. Branch will be created anyway.`
+        );
+      }
+    } catch {
+      // Invalid regex string pattern — ignore gracefully
+    }
+  }
+
   try {
     const git = getGit();
     if (from) {
@@ -352,5 +399,233 @@ export async function stash(message?: string): Promise<void> {
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to stash changes: ${msg}`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Phase 8: Log Explorer
+// ─────────────────────────────────────────────────────────────
+export async function getLogExplorer(options?: {
+  maxCount?: number;
+  author?: string;
+  grep?: string;
+  branch?: string;
+}): Promise<LogCommitInfo[]> {
+  try {
+    const git = getGit();
+    const logOptions: any = {
+      maxCount: options?.maxCount || 50,
+    };
+
+    if (options?.author && options.author.trim().length > 0) {
+      logOptions['--author'] = options.author.trim();
+    }
+    if (options?.grep && options.grep.trim().length > 0) {
+      logOptions['--grep'] = options.grep.trim();
+    }
+    if (options?.branch && options.branch.trim().length > 0) {
+      logOptions[options.branch.trim()] = null;
+    }
+
+    const logResult = await git.log(logOptions);
+    return logResult.all.map((c) => ({
+      hash: c.hash,
+      date: c.date,
+      message: c.message,
+      author_name: c.author_name,
+      author_email: c.author_email,
+      refs: c.refs || '',
+    }));
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to fetch log entries: ${msg}`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Phase 8: Stash Manager
+// ─────────────────────────────────────────────────────────────
+export async function listStashes(): Promise<StashInfo[]> {
+  try {
+    const git = getGit();
+    const stashList = await git.stashList();
+    return stashList.all.map((s, index) => ({
+      id: index,
+      name: `stash@{${index}}`,
+      date: s.date || 'Unknown date',
+      message: s.message || 'No description',
+    }));
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to list stashes: ${msg}`);
+  }
+}
+
+export async function createStash(message?: string): Promise<void> {
+  await stash(message);
+}
+
+export async function applyStash(ref: string): Promise<void> {
+  try {
+    const git = getGit();
+    await git.stash(['apply', ref]);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to apply ${ref}: ${msg}`);
+  }
+}
+
+export async function dropStash(ref: string): Promise<void> {
+  try {
+    const git = getGit();
+    await git.stash(['drop', ref]);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to drop ${ref}: ${msg}`);
+  }
+}
+
+export async function popStash(ref: string): Promise<void> {
+  try {
+    const git = getGit();
+    await git.stash(['pop', ref]);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to pop ${ref}: ${msg}`);
+  }
+}
+
+export async function getStashDiff(ref: string): Promise<string> {
+  try {
+    const git = getGit();
+    const diff = await git.raw(['stash', 'show', '-p', ref]);
+    return diff || 'No diff available for this stash.';
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to get diff for ${ref}: ${msg}`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Phase 8: Cherry-Pick Selector
+// ─────────────────────────────────────────────────────────────
+export async function cherryPick(sha: string): Promise<void> {
+  try {
+    const git = getGit();
+    await git.raw(['cherry-pick', sha]);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.includes('conflict') || msg.includes('after resolving the conflicts')) {
+      throw new CherryPickConflictError(sha);
+    }
+    throw new Error(`Failed to cherry-pick commit ${sha.slice(0, 7)}: ${msg}`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Phase 8: Rebase Preview (Read-Only)
+// ─────────────────────────────────────────────────────────────
+export async function getRebasePreview(baseBranch: string): Promise<RebaseCommitInfo[]> {
+  try {
+    const git = getGit();
+    const currentBranchSummary = await git.branch();
+    const currentBranch = currentBranchSummary.current;
+
+    if (!currentBranch) {
+      throw new Error('Not currently on any branch.');
+    }
+
+    // List commits that would move when rebasing current branch onto baseBranch: baseBranch..HEAD
+    const revListOutput = await git.raw(['log', '--oneline', `${baseBranch}..${currentBranch}`]);
+    const lines = revListOutput.trim().split('\n').filter((l) => l.trim().length > 0);
+
+    return lines.map((line) => {
+      const spaceIdx = line.indexOf(' ');
+      if (spaceIdx === -1) {
+        return { hash: line, message: '' };
+      }
+      return {
+        hash: line.substring(0, spaceIdx),
+        message: line.substring(spaceIdx + 1),
+      };
+    });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to generate rebase preview against '${baseBranch}': ${msg}`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Phase 8: Worktree Quick-Create
+// ─────────────────────────────────────────────────────────────
+export async function listWorktrees(): Promise<WorktreeInfo[]> {
+  try {
+    const git = getGit();
+    const rawOutput = await git.raw(['worktree', 'list', '--porcelain']);
+    const worktrees: WorktreeInfo[] = [];
+
+    const blocks = rawOutput.split('\n\n');
+    for (const block of blocks) {
+      if (!block.trim()) continue;
+      let path = '';
+      let commit = '';
+      let branch = '';
+      let isBare = false;
+
+      const lines = block.trim().split('\n');
+      for (const line of lines) {
+        if (line.startsWith('worktree ')) {
+          path = line.substring(9).trim();
+        } else if (line.startsWith('HEAD ')) {
+          commit = line.substring(5).trim();
+        } else if (line.startsWith('branch ')) {
+          branch = line.substring(7).replace('refs/heads/', '').trim();
+        } else if (line === 'bare') {
+          isBare = true;
+        }
+      }
+
+      if (path) {
+        worktrees.push({ path, commit, branch, isBare });
+      }
+    }
+
+    return worktrees;
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new WorktreeError(`Failed to list worktrees: ${msg}`);
+  }
+}
+
+export async function createWorktree(worktreePath: string, branch: string): Promise<void> {
+  try {
+    const git = getGit();
+    await git.raw(['worktree', 'add', worktreePath, branch]);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new WorktreeError(`Failed to add worktree at '${worktreePath}' for branch '${branch}': ${msg}`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Phase 9: PR Prep Assistant Data Fetching
+// ─────────────────────────────────────────────────────────────
+export async function getCommitsBetween(base: string, head?: string): Promise<LogCommitInfo[]> {
+  try {
+    const git = getGit();
+    const targetHead = head || (await git.branch()).current;
+    const logResult = await git.log({ from: base, to: targetHead });
+
+    return logResult.all.map((c) => ({
+      hash: c.hash,
+      date: c.date,
+      message: c.message,
+      author_name: c.author_name,
+      author_email: c.author_email,
+      refs: c.refs || '',
+    }));
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to get commits between ${base} and ${head || 'HEAD'}: ${msg}`);
   }
 }

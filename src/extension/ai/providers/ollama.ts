@@ -7,14 +7,20 @@ export class OllamaProvider implements AiProvider {
     this.baseUrl = baseUrl.replace(/\/$/, '');
   }
 
-  async generateCompletion(systemPrompt: string, userPrompt: string, model: string): Promise<string> {
+  async generateCompletion(
+    systemPrompt: string,
+    userPrompt: string,
+    model: string,
+    _maxTokens: number = 1000
+  ): Promise<string> {
+    const selectedModel = model && model.trim().length > 0 ? model : 'llama3';
     const response = await fetch(`${this.baseUrl}/api/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: model || 'llama3',
+        model: selectedModel,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
@@ -29,6 +35,11 @@ export class OllamaProvider implements AiProvider {
     }
 
     const data: any = await response.json();
-    return data.message?.content ?? '';
+    const content = data.message?.content;
+    if (!content || content.trim().length === 0) {
+      throw new Error(`Ollama model returned an empty response (model: ${selectedModel}).`);
+    }
+
+    return content;
   }
 }

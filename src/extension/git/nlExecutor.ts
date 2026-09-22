@@ -60,3 +60,17 @@ export async function executeNlOperation(op: NlOperation): Promise<string> {
     }
   }
 }
+
+export function cleanAndParsePlan(rawResponse: string) {
+  // Strip markdown code fences (```json ... ```)
+  let cleaned = rawResponse.replace(/```(?:json)?\s*([\s\S]*?)\s*```/g, '$1').trim();
+
+  // Extract the outermost JSON object if there is conversational text
+  const firstBrace = cleaned.indexOf('{');
+  const lastBrace = cleaned.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+  }
+
+  return JSON.parse(cleaned);
+}

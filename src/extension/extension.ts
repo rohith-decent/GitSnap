@@ -6,6 +6,8 @@ import { isAiEnabled } from './ai/config';
 import { createSettingsPanel } from './webview/panel';
 import { BranchDashboardPanel } from './webview/branchPanel';
 import { CommitEditorPanel } from './webview/commitEditorPanel';
+import { ToolkitPanel } from './webview/toolkitPanel';
+import { PrPrepPanel } from './webview/prPrepPanel';
 import { executeNlOperation } from './git/nlExecutor';
 import type { NlHistoryEntry } from '../types/nl';
 
@@ -56,6 +58,20 @@ export function activate(context: vscode.ExtensionContext) {
         }
     );
 
+    const openToolkitCmd = vscode.commands.registerCommand(
+        'gitsnap.openToolkit',
+        async () => {
+            await ToolkitPanel.render(context.extensionUri, context);
+        }
+    );
+
+    const openPrPrepCmd = vscode.commands.registerCommand(
+        'gitsnap.openPrPrep',
+        async () => {
+            await PrPrepPanel.render(context.extensionUri, context);
+        }
+    );
+
     const openNlInterfaceCmd = vscode.commands.registerCommand(
         'gitsnap.openNlInterface',
         async () => {
@@ -99,6 +115,8 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(openCommitEditorCmd);
     context.subscriptions.push(openSettingsCmd);
     context.subscriptions.push(openBranchDashboardCmd);
+    context.subscriptions.push(openToolkitCmd);
+    context.subscriptions.push(openPrPrepCmd);
     context.subscriptions.push(openNlInterfaceCmd);
     context.subscriptions.push(undoLastCommitCmd);
     context.subscriptions.push(setApiKeyCmd);

@@ -47,6 +47,24 @@
           ],
           "default": "groq",
           "description": "Which AI provider to use for AI-powered features."
+        },
+        "gitsnap.commitTemplate.scopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Allowed or suggested commit scopes for team standardization."
+        },
+        "gitsnap.branchNaming.pattern": {
+          "type": "string",
+          "default": "",
+          "description": "Regex pattern for branch naming validation (e.g. ^(feature|bugfix|hotfix)/.+)."
+        },
+        "gitsnap.ai.customSystemPrompt": {
+          "type": "string",
+          "default": "",
+          "description": "Custom system prompt for AI commit message generation (stored locally)."
         }
       }
     },
@@ -65,6 +83,16 @@
         "command": "gitsnap.openBranchDashboard",
         "title": "GitSnap: Open Branch Dashboard",
         "icon": "$(git-branch)"
+      },
+      {
+        "command": "gitsnap.openToolkit",
+        "title": "GitSnap: Open Advanced Toolkit",
+        "icon": "$(tools)"
+      },
+      {
+        "command": "gitsnap.openPrPrep",
+        "title": "GitSnap: PR Prep Assistant",
+        "icon": "$(git-pull-request)"
       },
       {
         "command": "gitsnap.openNlInterface",
@@ -100,6 +128,14 @@
         {
           "command": "gitsnap.openBranchDashboard",
           "group": "navigation@3"
+        },
+        {
+          "command": "gitsnap.openToolkit",
+          "group": "navigation@4"
+        },
+        {
+          "command": "gitsnap.openPrPrep",
+          "group": "navigation@5"
         }
       ]
     },
