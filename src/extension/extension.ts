@@ -11,25 +11,93 @@ import { PrPrepPanel } from './webview/prPrepPanel';
 import { executeNlOperation } from './git/nlExecutor';
 import type { NlHistoryEntry } from '../types/nl';
 
-// Create a dedicated output channel for debugging
 let outputChannel: vscode.OutputChannel;
 
 export function activate(context: vscode.ExtensionContext) {
-    // Create the output channel (visible in View > Output > GitSnap)
     outputChannel = vscode.window.createOutputChannel('GitSnap');
-    outputChannel.appendLine('GitSnap activated');
+    outputChannel.appendLine('GitSnap activated successfully.');
 
-    // ── Status Bar Button ──
+    // ── Status Bar Item ──
     const statusBarItem = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment.Left,
         100
     );
-    statusBarItem.text = '⚡ GitSnap';
-    statusBarItem.tooltip = 'AI Commit & Push';
+    statusBarItem.text = '$(zap) GitSnap';
+    statusBarItem.tooltip = 'GitSnap: Fast AI Commit & Push (Ctrl+Alt+Enter)';
     statusBarItem.command = 'gitsnap.aiCommitAndPush';
     statusBarItem.show();
 
-    // ── Register Commands ──
+    // ── Command: Show Quick Action Dropdown Menu ──
+    const showMenuCmd = vscode.commands.registerCommand('gitsnap.showMenu', async () => {
+        const items: (vscode.QuickPickItem & { command: string })[] = [
+            {
+                label: '$(zap)  AI Commit & Push',
+                description: 'Ctrl+Alt+Enter',
+                detail: 'Auto-stage, generate commit message with AI, and push upstream',
+                command: 'gitsnap.aiCommitAndPush',
+            },
+            {
+                label: '$(git-commit)  Commit Editor',
+                description: 'Ctrl+Alt+C',
+                detail: 'Side-by-side diff review & customize your commit message',
+                command: 'gitsnap.openCommitEditor',
+            },
+            {
+                label: '$(git-branch)  Branch Dashboard',
+                description: 'Ctrl+Alt+B',
+                detail: 'Visual branch overview, ahead/behind tracking & branch actions',
+                command: 'gitsnap.openBranchDashboard',
+            },
+            {
+                label: '$(tools)  Advanced Toolkit',
+                description: 'Ctrl+Alt+T',
+                detail: 'Stashes, log explorer, cherry-pick commits & worktrees',
+                command: 'gitsnap.openToolkit',
+            },
+            {
+                label: '$(git-pull-request)  PR Prep',
+                description: 'Ctrl+Alt+P',
+                detail: 'Generate PR title and markdown summary from branch diff',
+                command: 'gitsnap.openPrPrep',
+            },
+            {
+                label: '$(sparkle)  NL Git',
+                description: 'Ctrl+Alt+N',
+                detail: 'Describe a Git action in plain English',
+                command: 'gitsnap.openNlInterface',
+            },
+            {
+                label: '$(discard)  Undo Last Commit',
+                description: 'Ctrl+Alt+Z',
+                detail: 'Soft reset HEAD~1 (keeps modified files staged)',
+                command: 'gitsnap.undoLastCommit',
+            },
+            {
+                label: '$(gear)  Settings',
+                description: '',
+                detail: 'Configure AI provider, model selection, and templates',
+                command: 'gitsnap.openSettings',
+            },
+            {
+                label: '$(key)  Set API Key',
+                description: '',
+                detail: 'Securely store cloud provider API key in SecretStorage',
+                command: 'gitsnap.setApiKey',
+            },
+        ];
+
+        const picked = await vscode.window.showQuickPick(items, {
+            placeHolder: 'Select a GitSnap action...',
+            matchOnDescription: true,
+            matchOnDetail: true,
+        });
+
+        if (picked) {
+            await vscode.commands.executeCommand(picked.command);
+        }
+    });
+
+    // ── Command: Fast AI Commit & Push ──
     const aiCommitAndPushCmd = vscode.commands.registerCommand(
         'gitsnap.aiCommitAndPush',
         async () => {
@@ -37,6 +105,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
     );
 
+    // ── Command: Open Commit Editor ──
     const openCommitEditorCmd = vscode.commands.registerCommand(
         'gitsnap.openCommitEditor',
         async () => {
@@ -44,6 +113,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
     );
 
+    // ── Command: Open Settings ──
     const openSettingsCmd = vscode.commands.registerCommand(
         'gitsnap.openSettings',
         () => {
@@ -51,6 +121,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
     );
 
+    // ── Command: Open Branch Dashboard ──
     const openBranchDashboardCmd = vscode.commands.registerCommand(
         'gitsnap.openBranchDashboard',
         () => {
@@ -58,6 +129,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
     );
 
+    // ── Command: Open Advanced Toolkit ──
     const openToolkitCmd = vscode.commands.registerCommand(
         'gitsnap.openToolkit',
         async () => {
@@ -65,6 +137,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
     );
 
+    // ── Command: Open PR Prep Assistant ──
     const openPrPrepCmd = vscode.commands.registerCommand(
         'gitsnap.openPrPrep',
         async () => {
@@ -72,6 +145,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
     );
 
+    // ── Command: Open Natural Language Interface ──
     const openNlInterfaceCmd = vscode.commands.registerCommand(
         'gitsnap.openNlInterface',
         async () => {
@@ -79,19 +153,23 @@ export function activate(context: vscode.ExtensionContext) {
         }
     );
 
+    // ── Command: Undo Last Commit (Soft Reset) ──
     const undoLastCommitCmd = vscode.commands.registerCommand(
         'gitsnap.undoLastCommit',
         async () => {
             try {
                 await git.undoLastCommit();
                 vscode.window.showInformationMessage('✅ Undo last commit succeeded. Changes remain staged.');
+                outputChannel.appendLine('Soft reset executed: HEAD~1');
             } catch (error) {
                 const msg = error instanceof Error ? error.message : String(error);
-                vscode.window.showErrorMessage(`Undo failed: ${msg}`);
+                outputChannel.appendLine(`Undo failed: ${msg}`);
+                vscode.window.showErrorMessage(`GitSnap Undo failed: ${msg}`);
             }
         }
     );
 
+    // ── Command: Set API Key ──
     const setApiKeyCmd = vscode.commands.registerCommand(
         'gitsnap.setApiKey',
         async () => {
@@ -99,31 +177,34 @@ export function activate(context: vscode.ExtensionContext) {
                 prompt: 'Enter your AI provider API key',
                 password: true,
                 ignoreFocusOut: true,
-                placeHolder: 'gsk_... (your Groq API key)',
+                placeHolder: 'e.g. gsk_... (Groq), sk-... (OpenAI), sk-ant-... (Anthropic)',
             });
 
-            if (apiKey) {
-                await secrets.storeApiKey(context, apiKey);
-                vscode.window.showInformationMessage('✅ API key saved securely');
+            if (apiKey !== undefined && apiKey.trim().length > 0) {
+                await secrets.storeApiKey(context, apiKey.trim());
+                vscode.window.showInformationMessage('✅ API key saved securely in OS SecretStorage.');
             }
         }
     );
 
-    // ── Push disposables to context.subscriptions ──
-    context.subscriptions.push(statusBarItem);
-    context.subscriptions.push(aiCommitAndPushCmd);
-    context.subscriptions.push(openCommitEditorCmd);
-    context.subscriptions.push(openSettingsCmd);
-    context.subscriptions.push(openBranchDashboardCmd);
-    context.subscriptions.push(openToolkitCmd);
-    context.subscriptions.push(openPrPrepCmd);
-    context.subscriptions.push(openNlInterfaceCmd);
-    context.subscriptions.push(undoLastCommitCmd);
-    context.subscriptions.push(setApiKeyCmd);
-    context.subscriptions.push(outputChannel);
+    // ── Register Disposables ──
+    context.subscriptions.push(
+        statusBarItem,
+        showMenuCmd,
+        aiCommitAndPushCmd,
+        openCommitEditorCmd,
+        openSettingsCmd,
+        openBranchDashboardCmd,
+        openToolkitCmd,
+        openPrPrepCmd,
+        openNlInterfaceCmd,
+        undoLastCommitCmd,
+        setApiKeyCmd,
+        outputChannel
+    );
 }
 
-// ── The Main Pipeline ──
+// ── Fast Stage, Commit & Push Pipeline ──
 async function runAiCommitAndPush(context: vscode.ExtensionContext): Promise<void> {
     try {
         await vscode.window.withProgress(
@@ -133,11 +214,9 @@ async function runAiCommitAndPush(context: vscode.ExtensionContext): Promise<voi
                 cancellable: false,
             },
             async (progress) => {
-                // Step 1: Stage all changes
                 progress.report({ message: 'Staging changes...' });
                 await git.stageAll();
 
-                // Step 2: Get the diff
                 progress.report({ message: 'Reading diff...' });
                 const diff = await git.getDiff();
 
@@ -146,8 +225,7 @@ async function runAiCommitAndPush(context: vscode.ExtensionContext): Promise<voi
                     return;
                 }
 
-                // Step 3: Determine commit message (AI with fallback to manual input)
-                progress.report({ message: 'Generating commit message...' });
+                progress.report({ message: 'Drafting commit message...' });
 
                 let commitMessage: string | undefined;
 
@@ -160,9 +238,8 @@ async function runAiCommitAndPush(context: vscode.ExtensionContext): Promise<voi
                     } catch (error) {
                         outputChannel.appendLine(`AI generation failed: ${error instanceof Error ? error.message : String(error)}`);
 
-                        // AI failed — don't abort the whole pipeline, fall back to manual input
                         const manualInput = await vscode.window.showInputBox({
-                            prompt: 'AI commit message failed — enter one manually',
+                            prompt: 'AI message generation failed — enter commit message manually',
                             placeHolder: 'feat: describe your change',
                             ignoreFocusOut: true,
                         });
@@ -172,7 +249,6 @@ async function runAiCommitAndPush(context: vscode.ExtensionContext): Promise<voi
                         commitMessage = manualInput.trim() || 'chore: update code';
                     }
                 } else {
-                    // AI is disabled via settings — go straight to manual input
                     const manualInput = await vscode.window.showInputBox({
                         prompt: 'Enter a commit message',
                         placeHolder: 'feat: describe your change',
@@ -188,37 +264,32 @@ async function runAiCommitAndPush(context: vscode.ExtensionContext): Promise<voi
                     return;
                 }
 
-                // Step 4: Commit
-                progress.report({ message: 'Committing...' });
+                progress.report({ message: 'Committing changes...' });
                 await git.commit(commitMessage);
 
-                // Step 5: Push
                 progress.report({ message: 'Pushing to remote...' });
                 await git.push();
 
-                // Step 6: Success!
                 vscode.window.showInformationMessage(`✅ Pushed: ${commitMessage}`);
-                outputChannel.appendLine(`Success: ${commitMessage}`);
+                outputChannel.appendLine(`Pushed commit: ${commitMessage}`);
             }
         );
     } catch (error) {
-        // Log the full error for debugging
         const rawMessage = error instanceof Error ? error.message : String(error);
         outputChannel.appendLine(`ERROR: ${rawMessage}`);
         if (error instanceof Error && error.stack) {
             outputChannel.appendLine(error.stack);
         }
-
-        // Show friendly message to user
         vscode.window.showErrorMessage(rawMessage);
     }
 }
 
+// ── Natural Language Git Interface ──
 async function runNlInterface(context: vscode.ExtensionContext): Promise<void> {
     try {
         const inputPrompt = await vscode.window.showInputBox({
             prompt: 'Describe what you want GitSnap to do',
-            placeHolder: 'e.g. "switch to main branch", "undo last commit", "stash changes"',
+            placeHolder: 'e.g. "switch to main branch", "undo last commit", "stash current work"',
             ignoreFocusOut: true,
         });
 
@@ -244,7 +315,6 @@ async function runNlInterface(context: vscode.ExtensionContext): Promise<void> {
             return;
         }
 
-        // Show execution preview and confirmation
         const items = plan.commands.map((cmd, idx) => ({
             label: `${idx + 1}. [${cmd.op}] ${cmd.description}`,
             description: cmd.requiresConfirmation ? '⚠️ Requires confirmation' : 'Safe operation',
@@ -262,14 +332,12 @@ async function runNlInterface(context: vscode.ExtensionContext): Promise<void> {
             return;
         }
 
-        // Execute selected operations sequentially
         const results: string[] = [];
         for (const item of confirmed) {
             const output = await executeNlOperation(item.cmd);
             results.push(output);
         }
 
-        // Save history in workspaceState
         const history = context.workspaceState.get<NlHistoryEntry[]>('gitsnap.nlHistory', []);
         history.unshift({
             timestamp: new Date().toISOString(),
@@ -280,7 +348,7 @@ async function runNlInterface(context: vscode.ExtensionContext): Promise<void> {
         await context.workspaceState.update('gitsnap.nlHistory', history.slice(0, 20));
 
         vscode.window.showInformationMessage(`✅ Executed: ${results.join(' | ')}`);
-        outputChannel.appendLine(`NL Executed: ${inputPrompt} -> ${results.join('; ')}`);
+        outputChannel.appendLine(`NL Executed: "${inputPrompt}" -> ${results.join('; ')}`);
     } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
         outputChannel.appendLine(`NL Error: ${msg}`);
@@ -288,6 +356,4 @@ async function runNlInterface(context: vscode.ExtensionContext): Promise<void> {
     }
 }
 
-export function deactivate() {
-    // Cleanup happens automatically via context.subscriptions
-}
+export function deactivate() {}
